@@ -1,0 +1,13 @@
+version: 2026-09-12
+formulas:
+  shield_bash_damage: {skillId: shield-bash, expression: "weaponPower + strength * 1.25", inputs: [weaponPower, strength]}
+  spear_sweep_damage: {skillId: spear-sweep, expression: "weaponPower * 0.8 + strength", inputs: [weaponPower, strength]}
+  arc_bolt_damage: {skillId: arc-bolt, expression: "focusPower + intellect * 1.4", inputs: [focusPower, intellect]}
+  ember_orb_damage: {skillId: ember-orb, expression: "focusPower * 1.15 + intellect", inputs: [focusPower, intellect]}
+  starfall_damage: {skillId: starfall, expression: "focusPower * 2 + intellect * 0.6", inputs: [focusPower, intellect]}
+  quick_shot_damage: {skillId: quick-shot, expression: "bowPower + dexterity * 1.1", inputs: [bowPower, dexterity]}
+  piercing_arrow_damage: {skillId: piercing-arrow, expression: "bowPower * 1.35 + dexterity * 0.7", inputs: [bowPower, dexterity]}
+  volley_damage: {skillId: volley, expression: "bowPower * 0.65 + dexterity * 0.5", inputs: [bowPower, dexterity]}
+  counterblow_damage: {skillId: counterblow, expression: "weaponPower * 0.9 + strength * 1.5", inputs: [weaponPower, strength]}
+  comet_lance_damage: {skillId: comet-lance, expression: "focusPower * 1.6 + intellect * 1.2", inputs: [focusPower, intellect]}
+policy: "Only IDs in this file are individual scaling formulas."

@@ -1,0 +1,23 @@
+version: 2026-09-10
+classes:
+  vanguard:
+    shared_effects:
+      - id: guard_rating
+        formula: "armor + (resolve * 0.35)"
+      - id: melee_power
+        formula: "strength * 1.8 + weaponPower"
+  arcanist:
+    shared_effects:
+      - id: spell_power
+        formula: "intellect * 2.1 + focusPower"
+      - id: mana_pool
+        formula: "120 + intellect * 12"
+  ranger:
+    shared_effects:
+      - id: precision
+        formula: "dexterity * 1.6 + bowPower"
+      - id: evasion
+        formula: "agility * 0.9 + dexterity * 0.4"
+notes:
+  - "Shared effects apply to the class profile; they are not evidence of an individual skill scaling formula."
+  - "Rounding: retain full precision internally; show two decimals."

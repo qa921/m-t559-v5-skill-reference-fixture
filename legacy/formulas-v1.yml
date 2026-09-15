@@ -1,0 +1,7 @@
+# OBSOLETE — 2026-07 snapshot; do not publish or import
+formulas:
+  bulwark-stance: "armor * 1.4"
+  frost-lattice: "intellect * 2"
+  camouflage: "agility * 1.1"
+  shield-bash: "weaponPower + strength"
+reason: "Formula IDs and balance model superseded by v3."

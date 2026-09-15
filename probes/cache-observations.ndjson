@@ -1,0 +1,4 @@
+{"at":"2026-09-12T14:10:00Z","key":"skills:v3","cache":"hit","items":30,"action":"render from v3 export"}
+{"at":"2026-09-12T14:12:00Z","key":"skills:v3","cache":"timeout","action":"use bundled last-known export; show non-blocking freshness notice"}
+{"at":"2026-09-12T14:14:00Z","key":"skills:v3","cache":"miss","action":"use bundled last-known export; do not replace with legacy v2"}
+{"at":"2026-09-12T14:16:00Z","key":"skills:v3","cache":"malformed","action":"reject cache payload and use bundled last-known export"}
