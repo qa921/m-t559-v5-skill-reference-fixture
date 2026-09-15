@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Calculateur public — M-T559-V5</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #1c1c1e; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  .note { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: .75rem 1rem; font-size: .9rem; }
+  .warn { background: #fff8e6; border: 1px solid #eac54f; border-radius: 6px; padding: .75rem 1rem; font-size: .9rem; }
+  label { display: inline-block; margin: .35rem .75rem .35rem 0; font-size: .9rem; }
+  input[type=number] { width: 7rem; padding: .2rem .4rem; }
+  select { padding: .25rem .4rem; }
+  table { border-collapse: collapse; margin-top: .75rem; font-size: .9rem; }
+  td, th { border: 1px solid #d0d7de; padding: .35rem .6rem; text-align: left; }
+  .result { font-weight: 600; }
+  .muted { color: #57606a; font-size: .85rem; }
+  button { padding: .4rem .9rem; margin-top: .5rem; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+<h1>Calculateur public</h1>
+<p class="note">Périmètre confirmé (export v3 du 2026-09-12) : <strong>effets partagés de classe</strong> + <strong>10 compétences avec formule individuelle documentée sur 30 compétences exportées</strong>. Les 20 autres compétences n'ont aucune formule individuelle confirmée et ne sont pas calculées. Les effets de classe sont des règles partagées, pas des formules de compétence.</p>
+
+<h2>1. Effets partagés de classe</h2>
+<label>Classe :
+  <select id="classSel">
+    <option value="vanguard">Vanguard</option>
+    <option value="arcanist">Arcanist</option>
+    <option value="ranger">Ranger</option>
+  </select>
+</label>
+<div id="classInputs"></div>
+<div id="classOut"></div>
+
+<h2>2. Compétences avec formule individuelle</h2>
+<label>Compétence :
+  <select id="skillSel"></select>
+</label>
+<div id="skillInputs"></div>
+<div id="skillOut"></div>
+
+<h2>3. Compétences exportées sans formule individuelle</h2>
+<p class="muted">Ces 20 compétences figurent dans l'export v3 mais n'ont pas de formule de scaling individuelle documentée. Affichage : « Aucune formule individuelle documentée ». Ne pas déduire de formule à partir des effets de classe ni des anciens exports.</p>
+<div id="noFormulaList"></div>
+
+<p class="muted">Arrondi : précision complète en interne, affichage à deux décimales.</p>
+</main>
+
+<script>
+// ---- Données confirmées (sources canoniques uniquement) ----
+// rules/classes.yml (2026-09-10) — effets partagés. evasion EXCLU : contradiction classes.yml vs examples/calculator-cases.json.
+const CLASS_EFFECTS = {
+  vanguard: {
+    inputs: ["armor", "resolve", "strength", "weaponPower"],
+    effects: [
+      { id: "guard_rating", label: "Guard Rating", expr: v => v.armor + v.resolve * 0.35, text: "armor + resolve × 0.35" },
+      { id: "melee_power",  label: "Melee Power",  expr: v => v.strength * 1.8 + v.weaponPower, text: "strength × 1.8 + weaponPower" }
+    ]
+  },
+  arcanist: {
+    inputs: ["intellect", "focusPower"],
+    effects: [
+      { id: "spell_power", label: "Spell Power", expr: v => v.intellect * 2.1 + v.focusPower, text: "intellect × 2.1 + focusPower" },
+      { id: "mana_pool",   label: "Mana Pool",   expr: v => 120 + v.intellect * 12, text: "120 + intellect × 12" }
+    ]
+  },
+  ranger: {
+    inputs: ["dexterity", "bowPower"],
+    effects: [
+      { id: "precision", label: "Precision", expr: v => v.dexterity * 1.6 + v.bowPower, text: "dexterity × 1.6 + bowPower" }
+    ],
+    pending: "evasion : exclu — sources contradictoires (rules/classes.yml vs examples/calculator-cases.json), en attente d'arbitrage."
+  }
+};
+
+// formulas/documented-formulas.yml (2026-09-12) — les 10 seules formules individuelles confirmées.
+const SKILLS = [
+  { id: "shield-bash",     name: "Shield Bash",     cls: "vanguard",  inputs: ["weaponPower", "strength"],  expr: v => v.weaponPower + v.strength * 1.25,   text: "weaponPower + strength × 1.25" },
+  { id: "spear-sweep",     name: "Spear Sweep",     cls: "vanguard",  inputs: ["weaponPower", "strength"],  expr: v => v.weaponPower * 0.8 + v.strength,     text: "weaponPower × 0.8 + strength" },
+  { id: "counterblow",     name: "Counterblow",     cls: "vanguard",  inputs: ["weaponPower", "strength"],  expr: v => v.weaponPower * 0.9 + v.strength * 1.5, text: "weaponPower × 0.9 + strength × 1.5" },
+  { id: "arc-bolt",        name: "Arc Bolt",        cls: "arcanist",  inputs: ["focusPower", "intellect"],  expr: v => v.focusPower + v.intellect * 1.4,     text: "focusPower + intellect × 1.4" },
+  { id: "ember-orb",       name: "Ember Orb",       cls: "arcanist",  inputs: ["focusPower", "intellect"],  expr: v => v.focusPower * 1.15 + v.intellect,     text: "focusPower × 1.15 + intellect" },
+  { id: "starfall",        name: "Starfall",        cls: "arcanist",  inputs: ["focusPower", "intellect"],  expr: v => v.focusPower * 2 + v.intellect * 0.6,   text: "focusPower × 2 + intellect × 0.6" },
+  { id: "comet-lance",     name: "Comet Lance",     cls: "arcanist",  inputs: ["focusPower", "intellect"],  expr: v => v.focusPower * 1.6 + v.intellect * 1.2, text: "focusPower × 1.6 + intellect × 1.2" },
+  { id: "quick-shot",      name: "Quick Shot",      cls: "ranger",    inputs: ["bowPower", "dexterity"],    expr: v => v.bowPower + v.dexterity * 1.1,        text: "bowPower + dexterity × 1.1" },
+  { id: "piercing-arrow",  name: "Piercing Arrow",  cls: "ranger",    inputs: ["bowPower", "dexterity"],    expr: v => v.bowPower * 1.35 + v.dexterity * 0.7,  text: "bowPower × 1.35 + dexterity × 0.7" },
+  { id: "volley",          name: "Volley",          cls: "ranger",    inputs: ["bowPower", "dexterity"],    expr: v => v.bowPower * 0.65 + v.dexterity * 0.5,  text: "bowPower × 0.65 + dexterity × 0.5" }
+];
+
+// Export v3 : 20 compétences SANS formulaId — jamais représentées comme ayant une formule.
+const NO_FORMULA = {
+  vanguard: ["Bulwark Stance", "Iron Wall", "Rallying Cry", "Taunting Strike", "Battle March", "Stone Skin", "Field Repair"],
+  arcanist: ["Frost Lattice", "Mana Weave", "Prismatic Ward", "Blink Step", "Ether Siphon", "Runic Shield", "Mirror Image"],
+  ranger:   ["Snare Trap", "Hawk Eye", "Camouflage", "Wind Run", "Flare", "Smoke Arrow"]
+};
+
+const INPUT_LABELS = {
+  armor: "Armure (armor)", resolve: "Résolution (resolve)", strength: "Force (strength)",
+  weaponPower: "Puissance d'arme (weaponPower)", intellect: "Intelligence (intellect)",
+  focusPower: "Puissance de concentration (focusPower)", dexterity: "Dextérité (dexterity)",
+  bowPower: "Puissance d'arc (bowPower)", agility: "Agilité (agility)"
+};
+
+function inputFields(container, keys, prefix) {
+  container.innerHTML = keys.map(k =>
+    `<label>${INPUT_LABELS[k]} : <input type="number" step="any" id="${prefix}_${k}" value="0"></label>`
+  ).join("") + `<br><button id="${prefix}_go">Calculer</button>`;
+}
+function readValues(keys, prefix) {
+  const v = {};
+  keys.forEach(k => v[k] = parseFloat(document.getElementById(`${prefix}_${k}`).value) || 0);
+  return v;
+}
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2);
+
+// ---- Section classe ----
+const classSel = document.getElementById("classSel");
+function renderClass() {
+  const c = CLASS_EFFECTS[classSel.value];
+  inputFields(document.getElementById("classInputs"), c.inputs, "cls");
+  document.getElementById("classOut").innerHTML = "";
+  document.getElementById("cls_go").onclick = () => {
+    const v = readValues(c.inputs, "cls");
+    let html = "<table><tr><th>Effet</th><th>Formule</th><th>Résultat</th></tr>" +
+      c.effects.map(e => `<tr><td>${e.label}</td><td class="muted">${e.text}</td><td class="result">${fmt(e.expr(v))}</td></tr>`).join("") + "</table>";
+    if (c.pending) html += `<p class="warn">${c.pending}</p>`;
+    document.getElementById("classOut").innerHTML = html;
+  };
+}
+classSel.onchange = renderClass;
+renderClass();
+
+// ---- Section compétences ----
+const skillSel = document.getElementById("skillSel");
+skillSel.innerHTML = SKILLS.map((s, i) => `<option value="${i}">${s.name} (${s.cls})</option>`).join("");
+function renderSkill() {
+  const s = SKILLS[skillSel.value];
+  inputFields(document.getElementById("skillInputs"), s.inputs, "skl");
+  document.getElementById("skillOut").innerHTML = "";
+  document.getElementById("skl_go").onclick = () => {
+    const v = readValues(s.inputs, "skl");
+    document.getElementById("skillOut").innerHTML =
+      `<table><tr><th>Compétence</th><th>Formule</th><th>Résultat</th></tr>` +
+      `<tr><td>${s.name}</td><td class="muted">${s.text}</td><td class="result">${fmt(s.expr(v))}</td></tr></table>`;
+  };
+}
+skillSel.onchange = renderSkill;
+renderSkill();
+
+// ---- Section sans formule ----
+document.getElementById("noFormulaList").innerHTML =
+  "<table><tr><th>Classe</th><th>Compétences</th></tr>" +
+  Object.entries(NO_FORMULA).map(([cls, names]) =>
+    `<tr><td>${cls}</td><td>${names.join(", ")} — <span class="muted">Aucune formule individuelle documentée</span></td></tr>`
+  ).join("") + "</table>";
+</script>
+</body>
+</html>
