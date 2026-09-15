@@ -10,7 +10,7 @@ Réconciliation effectuée le 2026-09-15 à partir de `evidence/manifest.md` et 
 | `exports/skills.v3.json` (2026-09-12) | Inventaire canonique des 30 compétences |
 | `schema/skill-export.schema.json` | Contrat d'export (`formulaId` optionnel) |
 | `formulas/documented-formulas.yml` (2026-09-12) | Les 10 seules formules individuelles documentées |
-| `examples/calculator-cases.json` | Calculs attendus (vérification) |
+| `examples/calculator-cases.json` | Calculs attendus (vérification) — **sauf le cas `evasion`, erroné (voir plus bas)** |
 | `history/2026-09-maintainer-note.md` | Correction de périmètre : couverture 10/30, pas de backfill v1 |
 
 ## Sources écartées (anciennes / contradictoires)
@@ -30,7 +30,7 @@ Sources de contexte (hors calcul) : `auth/discord-link-contract.md`, `deploy/pri
 ### 1. Effets partagés de classe (règles de profil, pas des formules de compétence)
 - **vanguard** : `guard_rating = armor + resolve × 0.35` ; `melee_power = strength × 1.8 + weaponPower`
 - **arcanist** : `spell_power = intellect × 2.1 + focusPower` ; `mana_pool = 120 + intellect × 12`
-- **ranger** : `precision = dexterity × 1.6 + bowPower`
+- **ranger** : `precision = dexterity × 1.6 + bowPower` ; `evasion = agility × 0.9 + dexterity × 0.4`
 
 ### 2. Compétences avec formule individuelle (10/30)
 | Compétence | Classe | Formule |
@@ -52,7 +52,8 @@ Affichage obligatoire : « Aucune formule individuelle documentée ».
 - arcanist : Frost Lattice, Mana Weave, Prismatic Ward, Blink Step, Ether Siphon, Runic Shield, Mirror Image
 - ranger : Snare Trap, Hawk Eye, Camouflage, Wind Run, Flare, Smoke Arrow
 
-## Point ouvert (contradiction entre sources « current »)
-- **ranger `evasion`** : `rules/classes.yml` donne `agility × 0.9 + dexterity × 0.4` (= 30 avec agility 20 / dexterity 30) ; `examples/calculator-cases.json` attend **35** (cohérent avec `dexterity × 0.9 + agility × 0.4`). Exclu du calculateur en attendant l'arbitrage du maintainer.
+## Conflit résolu — ranger `evasion`
+- **Décision (2026-09-15)** : la règle **canonique** de `rules/classes.yml` est retenue : `evasion = agility × 0.9 + dexterity × 0.4` (soit **30** pour agility 20 / dexterity 30).
+- **Action requise** : le cas « ranger shared effects » de `examples/calculator-cases.json` attend `evasion: 35` — cette valeur est **erronée** (elle correspond à la forme inversée `dexterity × 0.9 + agility × 0.4`) et **doit être corrigée** en `30` dans le fichier d'exemples.
 
 Arrondi : précision complète en interne, affichage à deux décimales.
