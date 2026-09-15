@@ -52,7 +52,10 @@
 
 <script>
 // ---- Données confirmées (sources canoniques uniquement) ----
-// rules/classes.yml (2026-09-10) — effets partagés. evasion EXCLU : contradiction classes.yml vs examples/calculator-cases.json.
+// rules/classes.yml (2026-09-10) — effets partagés (canonique).
+// Note : le cas d'exemple « ranger shared effects » de examples/calculator-cases.json attend evasion = 35 ;
+// cette valeur est erronée. La règle canonique retenue est celle de classes.yml : agility × 0.9 + dexterity × 0.4
+// (soit 30 pour agility 20 / dexterity 30).
 const CLASS_EFFECTS = {
   vanguard: {
     inputs: ["armor", "resolve", "strength", "weaponPower"],
@@ -69,11 +72,11 @@ const CLASS_EFFECTS = {
     ]
   },
   ranger: {
-    inputs: ["dexterity", "bowPower"],
+    inputs: ["dexterity", "bowPower", "agility"],
     effects: [
-      { id: "precision", label: "Precision", expr: v => v.dexterity * 1.6 + v.bowPower, text: "dexterity × 1.6 + bowPower" }
-    ],
-    pending: "evasion : exclu — sources contradictoires (rules/classes.yml vs examples/calculator-cases.json), en attente d'arbitrage."
+      { id: "precision", label: "Precision", expr: v => v.dexterity * 1.6 + v.bowPower, text: "dexterity × 1.6 + bowPower" },
+      { id: "evasion",   label: "Evasion",   expr: v => v.agility * 0.9 + v.dexterity * 0.4, text: "agility × 0.9 + dexterity × 0.4" }
+    ]
   }
 };
 
@@ -127,7 +130,6 @@ function renderClass() {
     const v = readValues(c.inputs, "cls");
     let html = "<table><tr><th>Effet</th><th>Formule</th><th>Résultat</th></tr>" +
       c.effects.map(e => `<tr><td>${e.label}</td><td class="muted">${e.text}</td><td class="result">${fmt(e.expr(v))}</td></tr>`).join("") + "</table>";
-    if (c.pending) html += `<p class="warn">${c.pending}</p>`;
     document.getElementById("classOut").innerHTML = html;
   };
 }
